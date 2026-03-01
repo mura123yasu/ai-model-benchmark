@@ -51,3 +51,67 @@
 | コーディング（実装・レビュー） | 各10点 × 2 = 20点 |
 | コーディング（テトリス） | 50点 |
 | **合計** | **150点** |
+
+---
+
+## 自動評価システムの使い方
+
+プロンプトの実行・採点・レポート生成を自動化する `benchmark/` システムを利用できます。
+
+### セットアップ
+
+```bash
+# 依存ライブラリをインストール
+pip install -r requirements.txt
+
+# APIキーを設定（.env.example をコピーして編集）
+cp .env.example .env
+# .env にAPIキーを記入
+```
+
+### 実行方法
+
+```bash
+# テキスト系を全モデルで実行 → 採点 → レポート生成（一気通貫）
+python benchmark/cli.py run --date today
+
+# モデルを絞って実行
+python benchmark/cli.py run --date today --models claude-sonnet,gpt-4o
+
+# カテゴリを絞って実行
+python benchmark/cli.py run --date today --category coding
+
+# 手動結果を追加後に採点だけ再実行
+python benchmark/cli.py judge --date 20250301
+
+# レポートだけ再生成
+python benchmark/cli.py report --date 20250301
+```
+
+### 手動評価（画像・動画・音楽）の登録方法
+
+1. `results/YYYYMMDD/raw/manual/` ディレクトリを作成する
+2. 以下の形式でJSONファイルを置く（例: `image_generate_dalle3.json`）
+
+```json
+{
+  "model": "dalle3",
+  "category": "image",
+  "prompt_id": "image_generate",
+  "result_file": "image_001.png",
+  "manual_score": 8,
+  "max_score": 10,
+  "notes": "日本語テキストの再現が不完全"
+}
+```
+
+3. `python benchmark/cli.py judge --date YYYYMMDD` で採点を再実行する
+
+### 出力ファイル
+
+| パス | 内容 |
+|------|------|
+| `results/YYYYMMDD/raw/{model}.json` | 各モデルの生の回答 |
+| `results/YYYYMMDD/raw/manual/` | 手動評価結果を置く場所 |
+| `results/YYYYMMDD/scores/{model}.json` | 採点結果 |
+| `reports/YYYYMMDD.md` | Markdown比較レポート |

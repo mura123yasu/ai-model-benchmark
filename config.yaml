@@ -1,0 +1,21 @@
+models:
+  claude-sonnet:
+    provider: anthropic
+    model_id: claude-sonnet-4-6
+    api_key_env: ANTHROPIC_API_KEY
+  gpt-4o:
+    provider: openai
+    model_id: gpt-4o
+    api_key_env: OPENAI_API_KEY
+  gemini:
+    provider: google
+    model_id: gemini-1.5-pro
+    api_key_env: GOOGLE_API_KEY
+
+judge:
+  model: claude-sonnet-4-6
+  temperature: 0
+
+runner:
+  temperature: 0.7
+  runs_per_prompt: 3   # 3回実行して平均スコアを使う
