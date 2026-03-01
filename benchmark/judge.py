@@ -16,17 +16,12 @@ console = Console()
 
 ROOT = Path(__file__).parent.parent
 
-# coding_reviewで検出すべき脆弱性リスト（機械的カウント用）
+# coding_reviewで検出すべき脆弱性リスト（coding.mdの正解リストに準拠）
 VULNERABILITIES = [
     {
-        "id": "sqli_get_user",
-        "label": "SQLインジェクション（get_user）",
-        "keywords": ["SQLインジェクション", "sql injection", "f文字列", "f-string", "get_user", "フォーマット文字列"],
-    },
-    {
-        "id": "sqli_create_user",
-        "label": "SQLインジェクション（create_user）",
-        "keywords": ["SQLインジェクション", "sql injection", "f文字列", "f-string", "create_user", "フォーマット文字列"],
+        "id": "sqli",
+        "label": "SQLインジェクション（get_user・create_user）",
+        "keywords": ["SQLインジェクション", "sql injection", "f文字列", "f-string", "フォーマット文字列"],
     },
     {
         "id": "md5_hash",
@@ -48,10 +43,13 @@ VULNERABILITIES = [
         "label": "パスワードハッシュ露出（get_all_users）",
         "keywords": ["パスワード", "ハッシュ", "露出", "get_all_users", "全カラム", "機密情報"],
     },
+    {
+        "id": "missing_commit",
+        "label": "コミット漏れ（create_user で commit() 未呼び出し）",
+        "keywords": ["commit", "コミット", "書き込み", "確定", "conn.commit"],
+    },
 ]
 
-# SQLインジェクションは get_user と create_user の両方に存在するため、
-# 両方が1つの言及でカバーされる可能性を考慮してClaudeに判断を委ねる
 VULN_JUDGE_PROMPT = """以下のコードレビュー回答を読んで、次の6つの脆弱性・問題点それぞれが「指摘されているか」を判定してください。
 
 コードレビュー回答：
@@ -60,22 +58,22 @@ VULN_JUDGE_PROMPT = """以下のコードレビュー回答を読んで、次の
 ---
 
 判定する問題点：
-1. get_user関数でのSQLインジェクション（f文字列によるSQL組み立て）
-2. create_user関数でのSQLインジェクション（f文字列によるSQL組み立て）
-3. MD5の使用（非推奨ハッシュアルゴリズム）
-4. get_user関数でのパスワード平文比較（ハッシュ化されていないパスワードとDBのハッシュを直接比較）
-5. with文未使用によるコネクションリーク
-6. get_all_usersでパスワードハッシュを含む全カラムを返している（機密情報の露出）
+1. SQLインジェクション（get_user・create_user 両方のf文字列によるSQL組み立て）※どちらか一方の言及でもよい
+2. MD5の使用（非推奨ハッシュアルゴリズム）
+3. get_user関数でのパスワード平文比較（ハッシュ化されていないパスワードとDBのハッシュを直接比較）
+4. with文未使用によるコネクションリーク
+5. get_all_usersでパスワードハッシュを含む全カラムを返している（機密情報の露出）
+6. create_user で conn.commit() が呼ばれていない（書き込みが確定しない）
 
 各問題が回答内で指摘されているか判定し、以下のJSON形式のみで返してください：
 {
   "detections": {
-    "sqli_get_user": true,
-    "sqli_create_user": true,
+    "sqli": true,
     "md5_hash": true,
     "plaintext_password": true,
     "connection_leak": true,
-    "password_exposure": true
+    "password_exposure": true,
+    "missing_commit": true
   },
   "detected_count": 6,
   "notes": "補足コメント（省略可）"
